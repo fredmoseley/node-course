@@ -1,18 +1,18 @@
+//Core Modules
+//path core module - to manipuate strings
 const path = require("path");
-
+//Node Modules
 const express = require("express");
 const hbs = require("hbs");
-
+//My Modules
 const geocode = require("./utils/geocode");
 const forecast = require("./utils/forecast");
 
-// const hbs = require('hbs')
+//Changing port for Heroku deployment
+const port = process.env.PORT || 3000;
 const app = express();
-//path core module - to manipuate strings
-//https://nodejs.org/dist/latest-v12.x/docs/api/path.html
-//Need absolute path to serve up static files
 
-//Define paths for Express config
+//Need absolute path to serve up static files
 const publicDirPath = path.join(__dirname, "../public");
 const viewsPath = path.join(__dirname, "../templates/views");
 const partialsPath = path.join(__dirname, "../templates/partials");
@@ -23,8 +23,8 @@ app.set("view engine", "hbs");
 app.set("views", viewsPath);
 hbs.registerPartials(partialsPath);
 
-//Express works through your app until it finds a math
-//setup static director to serve
+//Express works through your app until it finds a match
+//setup static directory to serve
 app.use(express.static(publicDirPath));
 
 app.get("", (req, res) => {
@@ -48,33 +48,12 @@ app.get("/help", (req, res) => {
     message: "This is my test message for testing",
   });
 });
-//Express
-//root of app
-//Will never see this because of static index.html
-/*
-app.get('',(req,res)=>{
-    res.send(`<h1>Weather<h1>`)
-})
-*/
-/*
-app.get('/help',(req,res)=>{
-    res.send([{
-        name: 'Fred',
-        age: 49
-    },{
-        name: 'Danielle',
-        age: 47
-    }])
-})
 
-app.get('/about',(req,res)=>{
-    res.send('<h1>About Page</h1>')
-})
-*/
+
 app.get("/weather", (req, res) => {
   const address = req.query.address;
-
-  if (!address) {
+  
+  if (!address || /\W/g.test(/\s+/.test(address) ? address.replace(/\s/g,'_') : address)) {
     return res.send({
       error: "You must provide a address",
     });
@@ -84,34 +63,21 @@ app.get("/weather", (req, res) => {
     if (error) {
       return res.send(error);
     }
-
+    
     forecast(latitude, longitude, (error, forecastData) => {
       if (error) {
         return res.send(error);
       }
-   
+
       res.send({
         forecastData,
-          location,
-          address       
-      })
+        location,
+        address,
+      });
     });
   });
-
 });
 
-app.get("/products", (req, res) => {
-  //request query arguments are available on
-  console.log(req.query);
-  if (!req.query.search) {
-    return res.send({
-      error: "You must provide a search term",
-    });
-  }
-  res.send({
-    products: [],
-  });
-});
 
 app.get("/help/*", (req, res) => {
   res.render("404", {
@@ -121,6 +87,7 @@ app.get("/help/*", (req, res) => {
   });
 });
 
+//Catch any path that is not matched
 app.get("*", (req, res) => {
   res.render("404", {
     title: "404",
@@ -130,6 +97,6 @@ app.get("*", (req, res) => {
 });
 
 //start the server
-app.listen(3000, () => {
-  console.log("Server is up on port 3000");
+app.listen(port, () => {
+  console.log(`Server is up on port ${port}`);
 });

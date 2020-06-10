@@ -26,7 +26,6 @@ const data = geocode('Philadelphia');
 console.log(data);
 */
 
-
 //Callbacks fix this problem
 /*
 const geocode = (address, callback) => {
@@ -53,15 +52,27 @@ geocode('Philadelphia',(data)=>{
 // 3. After 2 seconds are up, call the callback function with the sum
 // 4. Test your work!
 
+// const add = (op1, op2, cb) => {
+//     setTimeout(() => {
+//         cb(op1 + op2);
 
+//     }, 2000)
+// }
 
-const add = (op1, op2, cb) => {
-    setTimeout(() => {
-        cb(op1 + op2);
+// add(1, 4, (sum) => {
+//     console.log(sum) // Should print: 5
+// })
+//Will convert to promises in promises.js
+const doWorkCallback = (callback) => {
+  setTimeout(() => {
+    //callback('This is my error', undefined)
+    callback(undefined, [1, 4, 7]);
+  }, 2000);
+};
 
-    }, 2000)
-}
-
-add(1, 4, (sum) => {
-    console.log(sum) // Should print: 5
-})
+doWorkCallback((error, result) => {
+  if (error) {
+    return console.log(error);
+  }
+  console.log(result);
+});

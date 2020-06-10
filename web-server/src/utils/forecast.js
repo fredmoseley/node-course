@@ -1,8 +1,5 @@
 const request = require('request');
 
-
-
-
 let params = {
      access_key: 'e0ff01677e1d23deef6ff84c1d0a63f8',
     query: '37.8267,-122.4233',
@@ -25,9 +22,11 @@ const forecast = (latitude, longitude, callback) => {
 
         } else {
             const {current} = body;
-            callback(undefined, `${current.weather_descriptions[0]} It is currently ${current.temperature} degrees out.  Feels like ${current.feelslike}.`);
+            const message =`${current.weather_descriptions[0]}. It is currently ${current.temperature} degrees out.  
+                            Feels like ${current.feelslike}.  The humidity is ${current.humidity}.`
+            callback(undefined, message);
         }
-    });
+    })
 }
 
 module.exports = forecast
