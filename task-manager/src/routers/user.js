@@ -11,7 +11,6 @@ router.post('/users', async (req, res) => {
   try {
     await user.save();
     //this line only executes if await sucessful
-
     const token = await user.generateAuthToken();
     res.status(201).send({ user, token });
   } catch (err) {
@@ -59,6 +58,7 @@ router.post('/users/logoutAll', auth, async (req, res) => {
     res(500).send(err.message);
   }
 });
+
 //
 //READ ME
 router.get('/users/me', auth, async (req, res) => {
@@ -81,7 +81,6 @@ router.get('/users/me', auth, async (req, res) => {
 
 //UPDATE user
 router.patch('/users/me', auth, async (req, res) => {
-  //const _id = req.params.id;
 
   //Can only update existing fields
   const updates = Object.keys(req.body);
@@ -93,14 +92,9 @@ router.patch('/users/me', auth, async (req, res) => {
     return res.status(400).send({ error: 'Invalid updates!' });
   }
   try {
-    // const user = await User.findById(req.params.id);
     //manually update fields
     updates.forEach((update) => (req.user[update] = req.body[update]));
     req.user.save();
-
-    // if (!user) {
-    //   return res.status(404).send(`There was not user with id ${_id}`);
-    // }
     res.send(req.user);
   } catch (error) {
     res.status(400).send(error.message);
@@ -113,10 +107,6 @@ router.delete('/users/me', auth, async (req, res) => {
 
   try {
     //no need to look up the user.  I can only delete myself
-    // const user = await User.findByIdAndDelete(_id);
-    // if (!user) {
-    //   res.status(404).send(`The user did not exist id: ${_id}`);
-    // }
     await req.user.remove();
     res.status(200).send(req.user);
   } catch (error) {
