@@ -1,8 +1,13 @@
 {
   "name": "task-manager",
   "version": "1.0.0",
-  "description": "",
+  "description": "task-manager app for The Complete Node.js Developer Course",
   "main": "index.js",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fredmoseley/node-course.git"
+  },
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
@@ -12,7 +17,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.5.8",
     "mongoose": "^5.9.18",
     "validator": "^13.1.0"

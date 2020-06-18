@@ -1,6 +1,7 @@
 express = require('express');
 router = express.Router();
 Task = require('../models/task');
+//create
 router.post('/tasks', async (req, res) => {
   const task = new Task(req.body);
   try {
@@ -11,6 +12,7 @@ router.post('/tasks', async (req, res) => {
   }
 });
 
+//read
 router.get('/tasks', async (req, res) => {
   try {
     const tasks = await Task.find({});
@@ -20,6 +22,7 @@ router.get('/tasks', async (req, res) => {
   }
 });
 
+//read one
 router.get('/tasks/:id', async (req, res) => {
   const _id = req.params.id;
 
@@ -34,6 +37,7 @@ router.get('/tasks/:id', async (req, res) => {
   }
 });
 
+//update
 router.patch('/tasks/:id', async (req, res) => {
   const _id = req.params.id;
   const allowedUpdates = ['description', 'completed']; //valid fields
@@ -58,10 +62,10 @@ router.patch('/tasks/:id', async (req, res) => {
       );
   }
   try {
-    const task = await Task.findByIdAndUpdate(_id, req.body, {
-      new: true,
-      runValidators: true
-    });
+    const task = await Task.findById(_id);
+    updates.forEach((update) => (task[update] = req.body[update]));
+    task.save();
+
     if (!task) {
       return res.status(400).send(`Could not find task with id ${_id}`);
     }
@@ -73,6 +77,7 @@ router.patch('/tasks/:id', async (req, res) => {
   }
 });
 
+//delete
 router.delete('/tasks/:id', async (req, res) => {
   try {
     const task = await Task.findByIdAndDelete(req.params.id);

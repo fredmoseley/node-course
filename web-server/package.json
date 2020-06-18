@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fredmoseley/node-course.git"
+  },
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js -e js hbs"

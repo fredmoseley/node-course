@@ -1,6 +1,8 @@
 const express = require('express');
 const router = new express.Router();
 const User = require('../models/user');
+const auth = require('../middleware/auth');
+
 //CREATE
 router.post('/users', async (req, res) => {
   //will do my validation for me
@@ -8,38 +10,79 @@ router.post('/users', async (req, res) => {
 
   try {
     await user.save();
-    //this line only executes if sucessful
-    res.status(201).send(user);
+    //this line only executes if await sucessful
+
+    const token = await user.generateAuthToken();
+    res.status(201).send({ user, token });
   } catch (err) {
     res.status(400).send(err.message);
   }
 });
-//READ ALL
-router.get('/users', async (req, res) => {
+
+//LOGIN
+router.post('/users/login', async (req, res) => {
   try {
-    const users = await User.find({});
-    res.send(users);
-  } catch (err) {
-    res.status(500).send(err.message);
-  }
-});
-//READ ONE
-router.get('/users/:id', async (req, res) => {
-  const _id = req.params.id;
-  try {
-    const user = await User.findById(_id);
-    if (!user) {
-      return res.status(404).send();
-    }
-    res.status(200).send(user);
-  } catch (err) {
-    res.status(500).send(err.message);
+    const user = await User.findByCredentials(
+      req.body.email,
+      req.body.password
+    );
+    const token = await user.generateAuthToken();
+    //odd I had to use await not sure why.
+    res.send({ user, token });
+  } catch (error) {
+    res.status(400).send(error.message);
   }
 });
 
+//LOGOUT
+router.post('/users/logout', auth, async (req, res) => {
+  try {
+    req.user.tokens = req.user.tokens.filter((token) => {
+      return token.token !== req.token;
+    });
+    await req.user.save();
+
+    res.send();
+  } catch (err) {
+    res.status(500).send();
+  }
+});
+
+//LOGOUT ALL
+router.post('/users/logoutAll', auth, async (req, res) => {
+  try {
+    //wipe all tokens
+    req.user.tokens = [];
+    await req.user.save();
+    res.send();
+  } catch (err) {
+    res(500).send(err.message);
+  }
+});
+//
+//READ ME
+router.get('/users/me', auth, async (req, res) => {
+  res.send(req.user);
+});
+
+// //READ ONE
+// router.get('/users/:id', async (req, res) => {
+//   const _id = req.params.id;
+//   try {
+//     const user = await User.findById(_id);
+//     if (!user) {
+//       return res.status(404).send();
+//     }
+//     res.status(200).send(user);
+//   } catch (err) {
+//     res.status(500).send(err.message);
+//   }
+// });
+
 //UPDATE user
-router.patch('/users/:id', async (req, res) => {
-  const _id = req.params.id;
+router.patch('/users/me', auth, async (req, res) => {
+  //const _id = req.params.id;
+
   //Can only update existing fields
   const updates = Object.keys(req.body);
   const allowedUpdates = ['name', 'email', 'password', 'age'];
@@ -50,32 +93,46 @@ router.patch('/users/:id', async (req, res) => {
     return res.status(400).send({ error: 'Invalid updates!' });
   }
   try {
-    const user = await User.findByIdAndUpdate(_id, req.body, {
-      new: true,
-      runValidators: true
-    });
-    if (!user) {
-      return res.status(404).send(`There was not user with id ${_id}`);
-    }
-    res.send(user);
+    // const user = await User.findById(req.params.id);
+    //manually update fields
+    updates.forEach((update) => (req.user[update] = req.body[update]));
+    req.user.save();
+
+    // if (!user) {
+    //   return res.status(404).send(`There was not user with id ${_id}`);
+    // }
+    res.send(req.user);
   } catch (error) {
     res.status(400).send(error.message);
   }
 });
 
 //DELETE
-router.delete('/users/:id', async (req, res) => {
-  const _id = req.params.id;
+router.delete('/users/me', auth, async (req, res) => {
+  const _id = req.user._id;
 
   try {
-    const user = await User.findByIdAndDelete(_id);
-    if (!user) {
-      res.status(404).send(`The user did not exist id: ${_id}`);
-    }
-    res.status(200).send(user);
+    //no need to look up the user.  I can only delete myself
+    // const user = await User.findByIdAndDelete(_id);
+    // if (!user) {
+    //   res.status(404).send(`The user did not exist id: ${_id}`);
+    // }
+    await req.user.remove();
+    res.status(200).send(req.user);
   } catch (error) {
     res.status(500).send(error.message);
   }
 });
 
 module.exports = router;
+//DELETE
+router.delete('/users/me', auth, async (req, res) => {
+  const _id = req.user._id;
+
+  try {
+    await req.user.remove();
+    res.status(200).send(req.user);
+  } catch (error) {
+    res.status(500).send(error.message);
+  }
+});

@@ -1,11 +1,14 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-const User = mongoose.model('User', {
+const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: {
     type: String,
     required: true,
+    unique: true,
     trim: true,
     lowercase: true,
     validate(value) {
@@ -33,7 +36,56 @@ const User = mongoose.model('User', {
         throw new Error('password cannnot contain "password"');
       }
     }
-  }
+  },
+  tokens: [
+    {
+      token: { type: String, required: true }
+    }
+  ]
 });
+//accessible on the model
+userSchema.statics.findByCredentials = async (email, password) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new Error('Unable to login');
+  }
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    throw new Error('Unable to login');
+  }
+  return user;
+};
+
+//will be on the instance - instance methods
+userSchema.methods.generateAuthToken = async function () {
+  const user = this;
+  const token = jwt.sign({ _id: user._id.toString() }, 'thisismynewcourse');
+  //we are saving token on request
+  user.tokens = user.tokens.concat({ token });
+  await user.save();
+
+  return token;
+};
+
+//overriding the instance toJSON method
+//this method is called automatically
+userSchema.methods.toJSON = function () {
+  const user = this;
+
+  const userObject = user.toObject();
+  delete userObject.password;
+  delete userObject.tokens;
+  return userObject;
+};
+
+userSchema.pre('save', async function (next) {
+  const user = this; //the document that will be saved
+  //has the password been modified since
+  if (user.isModified('password')) {
+    user.password = await bcrypt.hash(user.password, 8);
+  }
+  next();
+});
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;
