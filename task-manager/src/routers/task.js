@@ -2,6 +2,7 @@ express = require('express');
 router = express.Router();
 Task = require('../models/task');
 const auth = require('../middleware/auth');
+const e = require('express');
 
 //create
 router.post('/tasks', auth, async (req, res) => {
@@ -29,23 +30,30 @@ router.post('/tasks', async (req, res) => {
 });
 
 //read
-router.get('/tasks', async (req, res) => {
+router.get('/tasks', auth, async (req, res) => {
   try {
-    const tasks = await Task.find({});
-    res.send(tasks);
+    //method 1
+    //const tasks = await Task.find({ owner: req.user._id });
+    //res.send(tasks);
+
+    //method 2 using virtual attribute
+    await req.user.populate('tasks').execPopulate();
+    res.send(req.user.tasks);
   } catch (err) {
     res.status(500).send(err.message);
   }
 });
 
 //read one
-router.get('/tasks/:id', async (req, res) => {
+router.get('/tasks/:id', auth, async (req, res) => {
   const _id = req.params.id;
 
   try {
-    const task = await Task.findById(_id);
+    const task = await Task.findOne({ _id, owner: req.user._id });
     if (!task) {
-      return res.status(404).send(`Cannot find task with id ${_id}`);
+      // return res.status(404).send(`Cannot find task with id ${_id}`);
+      //better to not send details.  harder to hack??
+      return res.status(404).send();
     }
     res.send(task);
   } catch (error) {
@@ -54,7 +62,7 @@ router.get('/tasks/:id', async (req, res) => {
 });
 
 //update
-router.patch('/tasks/:id', async (req, res) => {
+router.patch('/tasks/:id', auth, async (req, res) => {
   const _id = req.params.id;
   const allowedUpdates = ['description', 'completed']; //valid fields
   const invalidFields = []; //list of invalid fields tried to update
@@ -78,27 +86,28 @@ router.patch('/tasks/:id', async (req, res) => {
       );
   }
   try {
-    const task = await Task.findById(_id);
-    updates.forEach((update) => (task[update] = req.body[update]));
-    task.save();
+    const task = await Task.findOne({ _id, owner: req.user._id });
 
     if (!task) {
-      return res.status(400).send(`Could not find task with id ${_id}`);
+      return res.status(404).send(`Could not find task.`);
     }
+    updates.forEach((update) => (task[update] = req.body[update]));
+    await task.save();
     res.status(200).send(task);
   } catch (error) {
-    res
-      .status(400)
-      .send(`Unable to update task with id ${_id}:  ${error.message}`);
+    res.status(400).send(error);
   }
 });
 
 //delete
-router.delete('/tasks/:id', async (req, res) => {
+router.delete('/tasks/:id', auth, async (req, res) => {
   try {
-    const task = await Task.findByIdAndDelete(req.params.id);
+    const task = await Task.findOneAndDelete({
+      _id: req.params.id,
+      owner: req.user._id
+    });
     if (!task) {
-      return res.status(404).send(`Cannot find task with id ${req.params.id}`);
+      return res.status(404).send(`Cannot find task.`);
     }
     res.status(200).send(task);
   } catch (error) {
