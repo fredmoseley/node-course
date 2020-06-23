@@ -19,20 +19,21 @@ app.use(cors());
 app.use(userRouter);
 app.use(taskRouter);
 
-// app.listen(port, () => {
-//   console.log(`Server is up on port ${port}`);
-// });
-https
-  .createServer(
-    {
-      key: fs.readFileSync(
-        path.join(__dirname, '../server/ssl-cert/server.key')
-      ),
-      cert: fs.readFileSync(
-        path.join(__dirname, '../server/ssl-cert/server.crt')
-      ),
-      passphrase: 'random madness define King ego'
-    },
-    app
-  )
-  .listen(3000);
+app.listen(port, () => {
+  console.log(`Server is up on port ${port}`);
+});
+
+// https
+//   .createServer(
+//     {
+//       key: fs.readFileSync(
+//         path.join(__dirname, '../server/ssl-cert/server.key')
+//       ),
+//       cert: fs.readFileSync(
+//         path.join(__dirname, '../server/ssl-cert/server.crt')
+//       ),
+//       passphrase: 'random madness define King ego'
+//     },
+//     app
+//   )
+//   .listen(3000);
