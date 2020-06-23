@@ -2,6 +2,9 @@ const express = require('express');
 const router = new express.Router();
 const User = require('../models/user');
 const auth = require('../middleware/auth');
+// const cors = require('cors');
+
+// router.options('*', cors());
 
 //CREATE
 router.post('/users', async (req, res) => {
@@ -19,8 +22,10 @@ router.post('/users', async (req, res) => {
 });
 
 //LOGIN
+// router.options('/users/login', cors()); // enable pre-flight request for DELETE request
 router.post('/users/login', async (req, res) => {
   try {
+    console.log('In log in route');
     const user = await User.findByCredentials(
       req.body.email,
       req.body.password
@@ -81,7 +86,6 @@ router.get('/users/me', auth, async (req, res) => {
 
 //UPDATE user
 router.patch('/users/me', auth, async (req, res) => {
-
   //Can only update existing fields
   const updates = Object.keys(req.body);
   const allowedUpdates = ['name', 'email', 'password', 'age'];
@@ -106,7 +110,6 @@ router.delete('/users/me', auth, async (req, res) => {
   const _id = req.user._id;
 
   try {
-    //no need to look up the user.  I can only delete myself
     await req.user.remove();
     res.status(200).send(req.user);
   } catch (error) {
