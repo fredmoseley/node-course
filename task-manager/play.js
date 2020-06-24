@@ -63,3 +63,31 @@
 // };
 
 // myFunction();
+
+// //File upload using multer
+// const multer = require('multer');
+// //can configure by type of upload
+// const upload = multer({
+//   dest: 'images',
+//   limits: {
+//     fileSize: 1000000 //1MB number in bytes
+//   },
+//   fileFilter(req, file, cb) {
+//     if (!file.originalname.match(/\.(doc|docx)$/)) {
+//       return cb(new Error('Please upload a Word document'));
+//     }
+//     cb(undefined, true); //accepts upload
+//   }
+// });
+
+// //upload route
+// app.post(
+//   '/upload',
+//   upload.single('upload'),
+//   (req, res) => {
+//     res.send();
+//   },
+//   (error, req, res, next) => {
+//     res.status(400).send({ error: error.message });
+//   }
+// );
