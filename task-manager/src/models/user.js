@@ -76,7 +76,7 @@ userSchema.statics.findByCredentials = async (email, password) => {
 //will be on the instance - instance methods
 userSchema.methods.generateAuthToken = async function () {
   const user = this;
-  const token = jwt.sign({ _id: user._id.toString() }, 'thisismynewcourse');
+  const token = jwt.sign({ _id: user._id.toString() }, process.env.JWT_SECRET);
   //we are saving token on request
   user.tokens = user.tokens.concat({ token });
   await user.save();
@@ -92,7 +92,7 @@ userSchema.methods.toJSON = function () {
   const userObject = user.toObject();
   delete userObject.password;
   delete userObject.tokens;
-  
+
   //deleting avatar because it is large and will slow down profile request
   //we have a separate url to serve it
   delete userObject.avatar;
